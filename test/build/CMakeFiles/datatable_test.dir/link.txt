@@ -1,0 +1,1 @@
+/bin/c++  -g  -rdynamic CMakeFiles/datatable_test.dir/main.cpp.o CMakeFiles/datatable_test.dir/home/rafdal/Documentos/PlatformIO/Projects/lib-development/lib/lib-data-table/src/DataTable.cpp.o  -o datatable_test 

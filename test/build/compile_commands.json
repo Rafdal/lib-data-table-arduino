@@ -1,0 +1,12 @@
+[
+{
+  "directory": "/home/rafdal/Documentos/PlatformIO/Projects/lib-development/lib/lib-data-table/test/build",
+  "command": "/bin/c++  -DCPP_TESTING=1  -g   -o CMakeFiles/datatable_test.dir/main.cpp.o -c /home/rafdal/Documentos/PlatformIO/Projects/lib-development/lib/lib-data-table/test/main.cpp",
+  "file": "/home/rafdal/Documentos/PlatformIO/Projects/lib-development/lib/lib-data-table/test/main.cpp"
+},
+{
+  "directory": "/home/rafdal/Documentos/PlatformIO/Projects/lib-development/lib/lib-data-table/test/build",
+  "command": "/bin/c++  -DCPP_TESTING=1  -g   -o CMakeFiles/datatable_test.dir/home/rafdal/Documentos/PlatformIO/Projects/lib-development/lib/lib-data-table/src/DataTable.cpp.o -c /home/rafdal/Documentos/PlatformIO/Projects/lib-development/lib/lib-data-table/src/DataTable.cpp",
+  "file": "/home/rafdal/Documentos/PlatformIO/Projects/lib-development/lib/lib-data-table/src/DataTable.cpp"
+}
+]
