@@ -128,10 +128,9 @@ void DataTable::setRegistry(int index, ...)
                 break;
             }
 
-            for (uint8_t b = 0; b < fieldFormat[i].size(); b++)
-            {
+            uint8_t fieldSize = fieldFormat[i].size();
+            for (uint8_t b = 0; b < fieldSize; b++)
                 writeHard(hardPos++, data[b]);
-            }
         }
         va_end(args);
     }
@@ -151,31 +150,12 @@ void DataTable::getRegistry(int index, ...)
             uint8_t data[MAX_VAR_SIZE];
             void* ptr = va_arg(args, void*);
 
-            for (uint8_t b = 0; b < fieldFormat[i].size(); b++)
-            {
-                data[b] = readHard(hardPos++);
-            }
+            uint8_t fieldSize = fieldFormat[i].size();
 
-            switch (fieldFormat[i].type)
-            {
-                case DataTable_UINT8:
-                    *((uint8_t*)ptr)        = *((uint8_t*)data);
-                    break;
-                case DataTable_ULONG:
-                    *((unsigned long*)ptr)  = *((unsigned long*)data);
-                    break;
-                case DataTable_INT:
-                    *((int*)ptr)            = *((int*)data);
-                    break;
-                case DataTable_UINT:
-                    *((unsigned int*)ptr)   = *((unsigned int*)data);
-                    break;
-                case DataTable_FLOAT:
-                    *((float*)ptr)          = *((float*)data);
-                    break;
-            default:
-                break;
-            }
+            for (uint8_t b = 0; b < fieldSize; b++)
+                data[b] = readHard(hardPos++);
+
+            memcpy(ptr, data, fieldSize); // ptr = dest, data = source
         }
         va_end(args);
     }
@@ -215,7 +195,7 @@ void DataTable::setPrimaryKey(uint8_t fieldId, void* value)
     if(fieldId < fieldCount)
     {
         primaryKey = fieldId;
-        memcpy(pKEmptyValue, value, fieldFormat[fieldId].size());
+        memcpy(pKEmptyValue, value, fieldFormat[fieldId].size()); // pKEmptyValue = dest, data = value
     }
 }
 
