@@ -119,8 +119,6 @@ protected:
     // General functions
     void cleanReservedMemory(uint8_t byte = 0);
 
-    virtual void errorMsg();
-
     // Wrappers for EEPROM, SPIFFS, etc
     virtual void beginHard(unsigned int hardMemSize) = 0;
     virtual void writeHard(unsigned int memPos, uint8_t data) = 0;

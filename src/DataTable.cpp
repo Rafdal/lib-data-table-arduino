@@ -217,11 +217,3 @@ void DataTable::cleanReservedMemory(uint8_t byte)
     for (unsigned int i = fieldCount; i < maxMemory; i++)
         writeHard(startMemory + i, byte);        
 }
-
-void DataTable::errorMsg()
-{
-    PRINT("DB ERR")
-    #ifndef CPP_TESTING
-    _delay_ms(1000);
-    #endif
-}
