@@ -34,4 +34,4 @@ int main(int, char**) {
         sprintf(buf, "%05u: %u\t%lu\n", i, a, b);
         cout << buf;
     }
-    }
+}
