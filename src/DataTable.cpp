@@ -8,7 +8,6 @@ struct FieldFormat
 {
     FieldFormat()
     {
-        // size = 0; 
         type = DataTable_undefinedType; 
     }
     uint8_t type;
@@ -68,7 +67,7 @@ void DataTable::begin(unsigned int startMemPos)
     startTable = startMemPos + fieldCount;
 
     // Check table initialized
-    if(fieldCount == 0)
+    if(fieldCount == 0 || registrySize == 0)
     {
         PRINT("BAD DataTable");
         return;

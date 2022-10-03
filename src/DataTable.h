@@ -11,7 +11,8 @@ using namespace std;
 #define PRINT(msg)  cout << (msg) << endl;
 #define MAX_VAR_SIZE 8
 #endif
-#include <stdarg.h>
+
+#include <stdarg.h> // varargs
 
 // Currently supported datatypes
 typedef enum {
