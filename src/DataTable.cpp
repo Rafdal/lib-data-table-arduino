@@ -40,7 +40,7 @@ struct FieldFormat
 DataTable::DataTable(const uint8_t fieldCount, const unsigned int maxMem) : fieldCount(fieldCount), maxMemory(maxMem)
 {
     fieldFormat = new FieldFormat[fieldCount]();
-    memset(pKEmptyValue, 0, MAX_VAR_SIZE);
+    memset(pKEmptyValue, 0, MAX_VAR_SIZE); // empty value is 0x0 by default
 }
 
 DataTable::~DataTable() 
@@ -63,18 +63,19 @@ void DataTable::setupField(uint8_t fieldIdx, FieldType type)
 
 void DataTable::begin(unsigned int startMemPos)
 {
-    startMemory = startMemPos;
-    startTable = startMemPos + fieldCount;
-
     // Check table initialized
-    if(fieldCount == 0 || registrySize == 0)
+    if(fieldCount == 0 || registrySize == 0 || maxRegistries != 0)
     {
         PRINT("BAD DataTable");
         return;
     }
 
+    startMemory = startMemPos;
+    startTable = startMemPos + fieldCount;
+
     // Check field format memory ok
-    for (uint8_t i = 0; i < fieldCount; i++)
+    bool doCleanFlag = false;
+    for (uint8_t i = 0; i < fieldCount && !doCleanFlag; i++)
     {
         if(fieldFormat[i].type == DataTable_undefinedType)
         {                
@@ -84,14 +85,112 @@ void DataTable::begin(unsigned int startMemPos)
 
         if(fieldFormat[i].type != readHard(startMemory + i))
         {
-            cleanReservedMemory(); // Fresh start
-            break;
+            doCleanFlag = true;
         }
     }
 
     maxRegistries = (maxMemory - fieldCount) / registrySize;
+
+    if(doCleanFlag)
+        cleanReservedMemory();
 }
 
+
+void DataTable::beginPK(unsigned int startMemPos, uint8_t pkFieldId, ...)
+{
+    if(pkFieldId < fieldCount)
+    {
+        va_list args;
+        va_start(args, pkFieldId);
+
+        primaryKey = pkFieldId;
+        switch (fieldFormat[pkFieldId].type)
+        {
+            case DataTable_UINT8:
+                *((uint8_t*)pKEmptyValue)       = (uint8_t) va_arg(args, int);
+                break;
+            case DataTable_ULONG:
+                *((unsigned long*)pKEmptyValue) = va_arg(args, unsigned long);
+                break;
+            case DataTable_INT:
+                *((int*)pKEmptyValue)           = va_arg(args, int);
+                break;
+            case DataTable_UINT:
+                *((unsigned int*)pKEmptyValue)  = va_arg(args, unsigned int);
+                break;
+            case DataTable_FLOAT:
+                *((float*)pKEmptyValue)         = (float) va_arg(args, double);
+                break;
+        default:
+            break;
+        }
+        va_end(args);
+
+        begin(startMemPos);
+    }
+    else
+    {
+        PRINT("BAD PK");
+    }
+}
+
+void DataTable::delRegistry(int index)
+{
+    if(index < maxRegistries && index >= 0)
+    {
+        uint8_t pksize = fieldFormat[primaryKey].size();
+
+        uint8_t fieldMemOffset = 0;
+        for (uint8_t i = 0; i < primaryKey; i++)
+            fieldMemOffset += fieldFormat[i].size();
+
+        for (uint8_t b = 0; b < pksize; b++)
+        {
+            writeHard(startTable + fieldMemOffset + (registrySize*index) + b, pKEmptyValue[b]);
+        }
+    }
+}
+
+bool DataTable::available(int index)
+{
+    if(index < maxRegistries && index >= 0)
+    {
+        uint8_t pksize = fieldFormat[primaryKey].size();
+
+        uint8_t fieldMemOffset = 0;
+        for (uint8_t i = 0; i < primaryKey; i++)
+            fieldMemOffset += fieldFormat[i].size();
+
+        uint8_t data[MAX_VAR_SIZE];
+
+        for (uint8_t b = 0; b < pksize; b++)
+            data[b] = readHard(startTable + fieldMemOffset + (registrySize*index) + b);
+
+        if(memcmp(pKEmptyValue, data, pksize) == 0)
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
+void DataTable::clean()
+{
+
+    for (unsigned int i = 0; i < lenght(); i++)
+    {
+        uint8_t pksize = fieldFormat[primaryKey].size();
+
+        uint8_t fieldMemOffset = 0;
+        for (uint8_t i = 0; i < primaryKey; i++)
+            fieldMemOffset += fieldFormat[i].size();
+
+        for (uint8_t b = 0; b < pksize; b++)
+        {
+            writeHard(startTable + fieldMemOffset + (registrySize*i) + b, pKEmptyValue[b]);
+        }
+    }
+}
 
 void DataTable::setRegistry(int index, ...)
 {
@@ -160,8 +259,7 @@ void DataTable::getRegistry(int index, ...)
     }
 }
 
-
-int DataTable::findValue(uint8_t fieldIndex, void* query)
+int DataTable::findValueReferenced(uint8_t fieldIndex, void* query)
 {
     if(fieldIndex < fieldCount)
     {
@@ -176,7 +274,7 @@ int DataTable::findValue(uint8_t fieldIndex, void* query)
         for (unsigned int i = 0; i < maxRegistries; i++)
         {
             for (uint8_t b = 0; b < fieldSize; b++)
-                data[b] = readHard(hardPos + fieldMemOffset);
+                data[b] = readHard(hardPos + fieldMemOffset + b);
 
             hardPos += registrySize;
 
@@ -189,30 +287,56 @@ int DataTable::findValue(uint8_t fieldIndex, void* query)
     return -1; 
 }
 
-void DataTable::setPrimaryKey(uint8_t fieldId, void* value)
+int DataTable::findValue(uint8_t fieldIndex, ...)
 {
-    if(fieldId < fieldCount)
+    if(fieldIndex < fieldCount)
     {
-        primaryKey = fieldId;
-        memcpy(pKEmptyValue, value, fieldFormat[fieldId].size()); // pKEmptyValue = dest, data = value
+        va_list args;
+        va_start(args, fieldIndex);
+
+        uint8_t query[MAX_VAR_SIZE];
+        switch (fieldFormat[fieldIndex].type)
+        {
+            case DataTable_UINT8:
+                *((uint8_t*)query)       = (uint8_t) va_arg(args, int);
+                break;
+            case DataTable_ULONG:
+                *((unsigned long*)query) = va_arg(args, unsigned long);
+                break;
+            case DataTable_INT:
+                *((int*)query)           = va_arg(args, int);
+                break;
+            case DataTable_UINT:
+                *((unsigned int*)query)  = va_arg(args, unsigned int);
+                break;
+            case DataTable_FLOAT:
+                *((float*)query)         = (float) va_arg(args, double);
+                break;
+        default:
+            break;
+        }
+        va_end(args);
+
+        return findValueReferenced(fieldIndex, query);
     }
+    return -1; 
 }
+
 
 int DataTable::newPos()
 {
-    return findValue(primaryKey, pKEmptyValue);
+    return findValueReferenced(primaryKey, pKEmptyValue);
 }
 
 
 // PRIVATE  FUNCTIONS
 
-void DataTable::cleanReservedMemory(uint8_t byte)
+void DataTable::cleanReservedMemory()
 {
     PRINT("Cleaning memory...");
 
     for (uint8_t i = 0; i < fieldCount; i++)
         writeHard(startMemory + i, fieldFormat[i].type);
     
-    for (unsigned int i = fieldCount; i < maxMemory; i++)
-        writeHard(startMemory + i, byte);        
+    clean();
 }

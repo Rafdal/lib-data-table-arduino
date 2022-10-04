@@ -3,35 +3,46 @@ using namespace std;
 
 
 #include "TESTDataTable.h"
-TESTDataTable table(2, 100);
+TESTDataTable table(2, 90);
 
 
-int main(int, char**) {
+int main(int, char**)
+{
 
-    table.setupField(0, DataTable_UINT8);
-    table.setupField(1, DataTable_ULONG);
+    table.setupField(0, DataTable_ULONG);
+    table.setupField(1, DataTable_UINT8);
 
     table.begin(0);
 
     cout << "Table Len: " << table.lenght() << endl;
 
-    table.setRegistry(0, 3, 0);
-    table.setRegistry(1, 5, 0);
-    table.setRegistry(2, 50, 42840868UL);
-    table.setRegistry(5, 11, 2349123UL);
-    table.setRegistry(8, 22, 4222222222UL);
+    table.setRegistry(0, 23446, 3);
+    table.setRegistry(1, 42840868UL, 50);
 
-    cout << "find idx: " << table.findValue(0, 0);
+    table.setRegistry(7, 1111, 5);
+    table.setRegistry(5, 2349123UL, 11);
+    table.setRegistry(8, 4222222222UL, 22);
 
-    cout << "\n\n";
+
+    cout << "TEST OUT: " << table.newPos() << endl;
+    // table.setRegistry(table.newPos(), 99999UL, 64);
+    // table.setRegistry(table.newPos(), 888888UL, 64);
+    // table.setRegistry(table.newPos(), 777UL, 64);
+
+    cout << "find idx: " << table.findValue(0, 1111) << endl;
+    cout << "available: " << table.available(2) << endl;
+
+    cout << "TABLE:\n";
 
     for (unsigned int i = 0; i < table.lenght(); i++)
     {
         uint8_t a;
-        unsigned long b;
-        table.getRegistry(i, &a, &b);
+        unsigned long num;
+        table.getRegistry(i, &num, &a);
         char buf[48];
-        sprintf(buf, "%05u: %u\t%lu\n", i, a, b);
+        sprintf(buf, "%4u:\t%u\t%lu\n", i, a, num);
         cout << buf;
     }
+
+    cout << "\nfinished\n";
 }
